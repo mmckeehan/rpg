@@ -9,6 +9,16 @@ namespace rpg
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
+        // Visual Assets
+        Texture2D playerSprite;
+        Texture2D walkDown;
+        Texture2D walkUp;
+        Texture2D walkRight;
+        Texture2D walkLeft;
+        Texture2D background;
+        Texture2D ball;
+        Texture2D skull;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -18,7 +28,9 @@ namespace rpg
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
+            _graphics.PreferredBackBufferHeight = 720;
+            _graphics.PreferredBackBufferWidth = 1280;
+            _graphics.ApplyChanges();
 
             base.Initialize();
         }
@@ -27,7 +39,14 @@ namespace rpg
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here
+            playerSprite = Content.Load<Texture2D>("Player/player");
+            walkDown = Content.Load<Texture2D>("Player/walkDown");
+            walkRight = Content.Load<Texture2D>("Player/walkRight");
+            walkLeft = Content.Load<Texture2D>("Player/walkLeft");
+            walkUp = Content.Load<Texture2D>("Player/walkUp");
+            ball = Content.Load<Texture2D>("ball");
+            skull = Content.Load<Texture2D>("skull");
+            background = Content.Load<Texture2D>("background");
         }
 
         protected override void Update(GameTime gameTime)
@@ -44,7 +63,11 @@ namespace rpg
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            _spriteBatch.Begin();
+
+            _spriteBatch.Draw(background, new Vector2(0, 0), Color.White);
+
+            _spriteBatch.End();
 
             base.Draw(gameTime);
         }
