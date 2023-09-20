@@ -1,9 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using Comora;
 
 namespace rpg
 {
+    enum Dir
+    {
+        Down,
+        Up,
+        Left,
+        Right
+    }
     public class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
@@ -19,6 +28,10 @@ namespace rpg
         Texture2D ball;
         Texture2D skull;
 
+        Player player = new Player();
+
+        Camera camera;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -32,6 +45,8 @@ namespace rpg
             _graphics.PreferredBackBufferWidth = 1280;
             _graphics.ApplyChanges();
 
+            this.camera = new Camera(_graphics.GraphicsDevice);
+
             base.Initialize();
         }
 
@@ -44,9 +59,18 @@ namespace rpg
             walkRight = Content.Load<Texture2D>("Player/walkRight");
             walkLeft = Content.Load<Texture2D>("Player/walkLeft");
             walkUp = Content.Load<Texture2D>("Player/walkUp");
+
             ball = Content.Load<Texture2D>("ball");
             skull = Content.Load<Texture2D>("skull");
             background = Content.Load<Texture2D>("background");
+
+            player.animations[0] = new SpriteAnimation(walkDown, 4, 8);
+            player.animations[1] = new SpriteAnimation(walkUp, 4, 8);
+            player.animations[2] = new SpriteAnimation(walkLeft, 4, 8);
+            player.animations[3] = new SpriteAnimation(walkRight, 4, 8);
+
+            player.anim = player.animations[0];
+
         }
 
         protected override void Update(GameTime gameTime)
@@ -54,7 +78,47 @@ namespace rpg
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
+            player.Update(gameTime);
+            if (!player.dead)
+            {
+                Controller.Update(gameTime, skull);
+            }
+            Controller.Update(gameTime, skull);
+
+            this.camera.Position = player.Position;
+            this.camera.Update(gameTime);
+
+            foreach (Projectile proj in Projectile.projectiles)
+            {
+                proj.Update(gameTime);
+            }
+
+            foreach (Enemy e in Enemy.enemies)
+            {
+                e.Update(gameTime, player.Position, player.dead);
+                int sum = 32 + e.radius;
+                if (Vector2.Distance(player.Position, e.Position) < sum)
+                {
+                    player.dead = true;
+                }
+            }
+
+            // Collision
+            foreach (Projectile proj in Projectile.projectiles)
+            {
+                foreach (Enemy enemy in Enemy.enemies)
+                {
+                    int sum = proj.radius + enemy.radius;
+                    if (Vector2.Distance(proj.Position, enemy.Position) < sum)
+                    {
+                        proj.Collided = true;
+                        enemy.Dead = true;
+                    }
+                }
+            }
+
+            Projectile.projectiles.RemoveAll(p => p.Collided);
+            Enemy.enemies.RemoveAll(e => e.Dead);
 
             base.Update(gameTime);
         }
@@ -63,9 +127,24 @@ namespace rpg
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(this.camera);
 
-            _spriteBatch.Draw(background, new Vector2(0, 0), Color.White);
+            _spriteBatch.Draw(background, new Vector2(-500, -500), Color.White);
+            // Draw Enemy
+            foreach (Enemy e in Enemy.enemies)
+            {
+                e.anim.Draw(_spriteBatch);
+            }
+
+            // Projectile Draw
+            foreach (Projectile proj in Projectile.projectiles)
+            {
+                _spriteBatch.Draw(ball, new Vector2 (proj.Position.X - 48, proj.Position.Y - 48), Color.White);
+            }
+            if (!player.dead)
+            {
+                player.anim.Draw(_spriteBatch);
+            }
 
             _spriteBatch.End();
 
